@@ -18,6 +18,7 @@ namespace DocumentService.Services
     public class DocumentService : IDocumentService
     {
         private readonly ILogger<DocumentService> _logger;
+        private readonly RedisService _redisService = new("https://localhost:5003", 2);
 
         /// <summary>
         /// DI constructor
@@ -42,18 +43,21 @@ namespace DocumentService.Services
                 object oTemplate = null;
                 string filledFilePath = null;
                 string[] dtoParams = null;
+               
+                _redisService.AddAsync("testKey", dto);
+                Console.WriteLine(_redisService.GetAsync<VacationDTO>("testKey"));
                 switch (type)
                 {
                     case "vacation":
-                        oTemplate = @"D:\DocumentService\data\blank-zayavleniya-na-otpusk.doc";
-                        filledFilePath = @"D:\DocumentService\data\vacation.doc";
+                        oTemplate = @"C:\.NetITIS\Dev\DocumentService\data\blank-zayavleniya-na-otpusk.doc";
+                        filledFilePath = @"C:\.NetITIS\Dev\DocumentService\data\vacation.doc";
                         dtoParams = new string[] {dto.DateDay, dto.DateMonth, dto.DateYear, dto.Duration,
                             dto.EndDateMonth, dto.EndDateYear, dto.EndDateDay, dto.FromWhom,
                                 dto.FullName, dto.StartDateDay, dto.StartDateMonth, dto.StartDateYear, dto.ToWhom };
                         break;
                     case "dismissal":
-                        oTemplate = @"D:\DocumentService\data\blank-zayavleniya-na-uvolnenie-po-sobstvennomu-zhelaniyu.doc";
-                        filledFilePath = @"D:\DocumentService\data\dismissal.doc";
+                        oTemplate = @"C:\.NetITIS\Dev\DocumentService\data\blank-zayavleniya-na-uvolnenie-po-sobstvennomu-zhelaniyu.doc";
+                        filledFilePath = @"C:\.NetITIS\Dev\DocumentServicedata\dismissal.doc";
                         dtoParams = new string[] {dto.DateDay, dto.DateMonth, dto.DateYear, dto.FromWhom,
                                 dto.FullName, dto.StartDateDay, dto.StartDateMonth, dto.StartDateYear, dto.ToWhom };
                         break;

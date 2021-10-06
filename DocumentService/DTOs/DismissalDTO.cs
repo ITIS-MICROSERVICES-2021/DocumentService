@@ -3,6 +3,7 @@
     /// <summary>
     /// Base DTO for template fields
     /// </summary>
+    
     public class TemplateDTO
     {
         /// <summary>

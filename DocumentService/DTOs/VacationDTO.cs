@@ -1,8 +1,12 @@
-﻿namespace DocumentService.DTOs
+﻿using StackExchange.Redis.Extensions.MsgPack;
+
+namespace DocumentService.DTOs
 {
     /// <summary>
     /// DTO for vacation template fields
     /// </summary>
+    
+    
     public class VacationDTO : TemplateDTO
     {
 

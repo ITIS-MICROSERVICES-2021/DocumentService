@@ -30,6 +30,7 @@ namespace DocumentService
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "DocumentService", Version = "v1" });
             });
             services.AddTransient<IDocumentService, Services.DocumentService>();
+            //services.AddRedis(Configuration.GetConnectionString("Redis"), 1);
 
         }
 
