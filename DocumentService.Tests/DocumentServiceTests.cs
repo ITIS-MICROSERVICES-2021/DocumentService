@@ -1,12 +1,12 @@
-﻿using System.Linq;
+﻿#define HAS_STUPID_REDIS_SERVICE_WITHOUT_DI
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using DocumentService.DTOs;
 using DocumentService.Services;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using DocumentServiceClass = DocumentService.Services.DocumentService;
-
-#define HAS_STUPID_REDIS_SERVICE_WITHOUT_DI
 
 namespace DocumentService.Tests
 {
@@ -19,7 +19,7 @@ namespace DocumentService.Tests
         public void NotInTypeList_DoesntCauseExceptions()
         {
             var documentService = CreateDocumentService();
-            
+
             documentService.FillInTemplate("not in type list!!!!", 1, new VacationDTO()
             {
                 Duration = "1",
@@ -36,6 +36,35 @@ namespace DocumentService.Tests
                 StartDateMonth = "1",
                 StartDateYear = "1",
             });
+        }
+
+        [Fact]
+        public void FillInVacationTemplate_NewOutputFileCreated()
+        {
+            var documentService = CreateDocumentService();
+
+            const string outputPath = @"C:\.NetITIS\Dev\DocumentService\data\vacation.doc";
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
+
+            documentService.FillInTemplate("vacation", 1, new VacationDTO()
+            {
+                Duration = "1",
+                DateDay = "1",
+                DateMonth = "1",
+                DateYear = "1",
+                FromWhom = "1",
+                FullName = "1",
+                ToWhom = "1",
+                EndDateDay = "1",
+                EndDateMonth = "1",
+                EndDateYear = "1",
+                StartDateDay = "1",
+                StartDateMonth = "1",
+                StartDateYear = "1",
+            });
+
+            Assert.True(File.Exists(outputPath));
         }
 
         [Fact]
