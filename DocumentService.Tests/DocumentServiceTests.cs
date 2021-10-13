@@ -26,6 +26,35 @@ namespace DocumentService.Tests
 
         private static DocumentServiceClass CreateDocumentService()
         {
+            //Данная магия обосновывается тем, что господа не удосужились сделать DI для RedisService в DocumentService,
+            //как это делают нормальные люди, вместо этого они зашили зависимость в инициализацию поля (!!!)
+            //private readonly RedisService _redisService = new("https://localhost:5003", 2);
+            
+            //Ну мы люди не гордые, мы в рантайме заменили конструктор RedisService
+            //c:
+            
+            /*
+            public RedisService(string connectionString, int database)
+            {
+                var redisConfig = new RedisConfiguration
+                {
+                    ConnectionString = connectionString,
+                    Database = database,
+                    AbortOnConnectFail = false
+                };
+            
+                var poolManager = new RedisCacheConnectionPoolManager(redisConfig);
+                var client = new RedisCacheClient(poolManager, new MsgPackObjectSerializer(), redisConfig);
+                _db = client.GetDbFromConfiguration();
+            }
+            */
+            
+            //на что-то вроде:
+            /*
+            RedisService(string connectionString, int database){
+              _db = new RedisDatabaseMock();
+            }
+            */
 #if HAS_STUPID_REDIS_SERVICE_WITHOUT_DI
             var harmony = new Harmony("harmony");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
@@ -66,7 +95,7 @@ namespace DocumentService.Tests
 
         [Fact]
         //что за клоуны...
-        public void PredefinedTemplateInTheirPath()
+        public void PredefinedTemplateInTheirPath_NewOutputFileCreated()
         {
             var fileName = "blank-zayavleniya-na-otpusk.doc";
 
