@@ -24,4 +24,10 @@
       <ProjectReference Include="..\DocumentService\DocumentService.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="TestData\blank-zayavleniya-na-otpusk.doc">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

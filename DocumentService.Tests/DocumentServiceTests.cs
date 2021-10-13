@@ -36,57 +36,71 @@ namespace DocumentService.Tests
 #endif
         }
 
+        private static VacationDTO GetVacationDto()
+        {
+            return new VacationDTO()
+            {
+                Duration = "1",
+                DateDay = "1",
+                DateMonth = "1",
+                DateYear = "1",
+                FromWhom = "1",
+                FullName = "1",
+                ToWhom = "1",
+                EndDateDay = "1",
+                EndDateMonth = "1",
+                EndDateYear = "1",
+                StartDateDay = "1",
+                StartDateMonth = "1",
+                StartDateYear = "1",
+            };
+        }
+
         [Fact]
         public void NotInTypeList_DoesntCauseExceptions()
         {
             var documentService = CreateDocumentService();
 
-            documentService.FillInTemplate("not in type list!!!!", 1, new VacationDTO()
-            {
-                Duration = "1",
-                DateDay = "1",
-                DateMonth = "1",
-                DateYear = "1",
-                FromWhom = "1",
-                FullName = "1",
-                ToWhom = "1",
-                EndDateDay = "1",
-                EndDateMonth = "1",
-                EndDateYear = "1",
-                StartDateDay = "1",
-                StartDateMonth = "1",
-                StartDateYear = "1",
-            });
+            documentService.FillInTemplate("not in type list!!!!", 1, GetVacationDto());
         }
 
         [Fact]
-        public void FillInVacationTemplate_NewOutputFileCreated()
+        //что за клоуны...
+        public void PredefinedTemplateInTheirPath()
+        {
+            var fileName = "blank-zayavleniya-na-otpusk.doc";
+
+            var inputDirectory = @"C:\.NetITIS\Dev\DocumentService\data";
+            var inputPath = $@"{inputDirectory}\{fileName}";
+            var outputPath = $@"{inputDirectory}\vacation.doc";
+
+            if (!Directory.Exists(inputDirectory))
+                Directory.CreateDirectory(inputDirectory);
+            File.Copy($@"./TestData/{fileName}", inputPath);
+
+            FillInVacationTemplate_NewOutputFileCreated(inputPath, outputPath);
+            
+            if (File.Exists(inputPath))
+                File.Delete(inputPath);
+            if (Directory.Exists(inputDirectory))
+                Directory.Delete(inputDirectory);
+        }
+
+        [Theory]
+        [InlineData(@".\vacation_input.doc", @".\vacation_output.doc")]
+        public void FillInVacationTemplate_NewOutputFileCreated(string inputPath, string outputPath)
         {
             var documentService = CreateDocumentService();
 
-            const string inputPath = @".\vacation_input.doc";
-            const string outputPath = @".\vacation_output.doc";
             if (File.Exists(outputPath))
                 File.Delete(outputPath);
 
-            documentService.FillInTemplate("vacation", 1, new VacationDTO()
-            {
-                Duration = "1",
-                DateDay = "1",
-                DateMonth = "1",
-                DateYear = "1",
-                FromWhom = "1",
-                FullName = "1",
-                ToWhom = "1",
-                EndDateDay = "1",
-                EndDateMonth = "1",
-                EndDateYear = "1",
-                StartDateDay = "1",
-                StartDateMonth = "1",
-                StartDateYear = "1",
-            });
+            documentService.FillInTemplate("vacation", 1, GetVacationDto());
 
             Assert.True(File.Exists(outputPath));
+            
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
         }
 
         [Fact]
