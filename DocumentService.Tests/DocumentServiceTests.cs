@@ -1,19 +1,40 @@
 ﻿#define HAS_STUPID_REDIS_SERVICE_WITHOUT_DI
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using DocumentService.DTOs;
 using DocumentService.Services;
+using HarmonyLib;
 using Microsoft.Extensions.Logging;
 using Xunit;
+using Xunit.Abstractions;
+
 using DocumentServiceClass = DocumentService.Services.DocumentService;
 
 namespace DocumentService.Tests
 {
     public class DocumentServiceTests
     {
-        private static DocumentServiceClass CreateDocumentService() =>
-            new(new Logger<DocumentServiceClass>(new LoggerFactory()));
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public DocumentServiceTests(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+
+        private static DocumentServiceClass CreateDocumentService()
+        {
+#if HAS_STUPID_REDIS_SERVICE_WITHOUT_DI
+            var harmony = new Harmony("harmony");
+            harmony.PatchAll(Assembly.GetExecutingAssembly());
+            
+            return new DocumentServiceClass(new Logger<DocumentServiceClass>(new LoggerFactory()));
+#else
+            return new DocumentServiceClass(new Logger<DocumentServiceClass>(new LoggerFactory()));
+#endif
+        }
 
         [Fact]
         public void NotInTypeList_DoesntCauseExceptions()
@@ -43,7 +64,8 @@ namespace DocumentService.Tests
         {
             var documentService = CreateDocumentService();
 
-            const string outputPath = @"C:\.NetITIS\Dev\DocumentService\data\vacation.doc";
+            const string inputPath = @".\vacation_input.doc";
+            const string outputPath = @".\vacation_output.doc";
             if (File.Exists(outputPath))
                 File.Delete(outputPath);
 
