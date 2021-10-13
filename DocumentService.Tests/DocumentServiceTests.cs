@@ -1,17 +1,22 @@
-﻿using DocumentService.DTOs;
+﻿using System.Linq;
+using System.Reflection;
+using DocumentService.DTOs;
+using DocumentService.Services;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Service = DocumentService.Services.DocumentService;
+using DocumentServiceClass = DocumentService.Services.DocumentService;
+
+#define HAS_STUPID_REDIS_SERVICE_WITHOUT_DI
 
 namespace DocumentService.Tests
 {
     public class DocumentServiceTests
     {
-        private static Services.DocumentService CreateDocumentService() =>
-            new(new Logger<Services.DocumentService>(new LoggerFactory()));
+        private static DocumentServiceClass CreateDocumentService() =>
+            new(new Logger<DocumentServiceClass>(new LoggerFactory()));
 
         [Fact]
-        public void Test1()
+        public void NotInTypeList_DoesntCauseExceptions()
         {
             var documentService = CreateDocumentService();
             
@@ -31,6 +36,27 @@ namespace DocumentService.Tests
                 StartDateMonth = "1",
                 StartDateYear = "1",
             });
+        }
+
+        [Fact]
+        public void DoesNotContain_RedisService_WithoutDependencyInjection()
+        {
+            var type = typeof(DocumentServiceClass);
+            var redisType = typeof(RedisService);
+
+            var anyCtorWithType = type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .SelectMany(x => x.GetParameters())
+                .Any(x => x.ParameterType == redisType);
+
+            var anyPropertyWithType = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Any(x => x.PropertyType == redisType);
+
+            var anyFieldWithType = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Any(x => x.FieldType == redisType);
+
+            var anyUsage = anyFieldWithType || anyPropertyWithType;
+
+            Assert.False(anyUsage ^ anyCtorWithType);
         }
     }
 }
