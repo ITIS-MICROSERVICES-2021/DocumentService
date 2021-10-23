@@ -9,6 +9,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 
 using DocumentService.DTOs;
+using DocumentService.Options;
 
 namespace DocumentService.Services
 {
@@ -18,14 +19,16 @@ namespace DocumentService.Services
     public class DocumentService : IDocumentService
     {
         private readonly ILogger<DocumentService> _logger;
-        private readonly RedisService _redisService = new("https://localhost:5003", 2);
-
+        private readonly RedisService _redisService;
+        
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DocumentService(ILogger<DocumentService> logger)
+        public DocumentService(ILogger<DocumentService> logger, IOptions<RedisOptions> redisOptions)
         {
             _logger = logger;
+             
+            _redisService = new RedisService(redisOptions.Value.ConnectionString, 2);
         }
         
         /// <summary>
