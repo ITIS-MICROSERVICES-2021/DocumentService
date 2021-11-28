@@ -1,8 +1,6 @@
-using System;
 using System.Threading.Tasks;
+using DocumentService.Dto;
 using Microsoft.AspNetCore.Mvc;
-
-using DocumentService.DTOs;
 
 namespace DocumentService.Services
 {
@@ -14,6 +12,6 @@ namespace DocumentService.Services
         /// <summary>
         /// Fill in template method
         /// </summary>
-        void FillInTemplate(string filePath, long userId, VacationDTO dto);
+        Task<FileContentResult> FillInTemplate(string filePath, DocumentDto dto);
     }
 }
