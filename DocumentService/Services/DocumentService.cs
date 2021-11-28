@@ -1,15 +1,14 @@
 using System;
+using System.Globalization;
 using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Word = Microsoft.Office.Interop.Word;
-using Microsoft.Extensions.Options;
 using System.Reflection;
-using Newtonsoft.Json;
-
-using DocumentService.DTOs;
-using DocumentService.Options;
+using System.Threading.Tasks;
+using DocumentService.Dto;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using RedisIO.Services;
 
 namespace DocumentService.Services
 {
@@ -19,50 +18,87 @@ namespace DocumentService.Services
     public class DocumentService : IDocumentService
     {
         private readonly ILogger<DocumentService> _logger;
-        private readonly RedisService _redisService;
-        
+        private readonly IRedisIOService _redis;
+        private readonly IConfiguration _config;
+        private readonly IUserService _users;
+        private readonly ITemplateService _templates;
+
+        private const string GenDirectorFullName = "Жерард Жира Георгиович";
+        private const string VacationFileName = "blank-zayavleniya-na-otpusk.doc";
+        private const string DismissalFileName = "blank-zayavleniya-na-uvolnenie-po-sobstvennomu-zhelaniyu.doc";
+
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DocumentService(ILogger<DocumentService> logger, IOptions<RedisOptions> redisOptions)
+        public DocumentService(ILogger<DocumentService> logger, IRedisIOService redis, IConfiguration config,
+            IUserService users, ITemplateService templates)
         {
             _logger = logger;
-             
-            _redisService = new RedisService(redisOptions.Value.ConnectionString, 2);
+            _redis = redis;
+            _config = config;
+            _users = users;
+            _templates = templates;
         }
-        
+
         /// <summary>
         /// Fill in template method implementation
         /// </summary>
-        public void FillInTemplate(string type, long userId, VacationDTO dto)
+        public async Task<FileContentResult> FillInTemplate(string type, DocumentDto dto)
         {
+            var dir = _config["FileDirectoryPath"];
             Word._Document oDoc = null;
             Word._Application oWord = null;
             try
             {
-
                 object oMissing = Missing.Value;
-                oWord = new Word.Application();           
+                oWord = new Word.Application();
                 object oTemplate = null;
                 string filledFilePath = null;
+                string filledFileName = null;
                 string[] dtoParams = null;
-               
-                _redisService.AddAsync("testKey", dto);
-                Console.WriteLine(_redisService.GetAsync<VacationDTO>("testKey"));
+                var userDto = _users.GetDocumentUser(dto.AuthorId);
+
+                await _redis.AddAsync("testKey", dto);
+                Console.WriteLine(await _redis.GetAsync<DocumentDto>("testKey"));
                 switch (type)
                 {
                     case "vacation":
-                        oTemplate = @"C:\.NetITIS\Dev\DocumentService\data\blank-zayavleniya-na-otpusk.doc";
-                        filledFilePath = @"C:\.NetITIS\Dev\DocumentService\data\vacation.doc";
-                        dtoParams = new string[] {dto.DateDay, dto.DateMonth, dto.DateYear, dto.Duration,
-                            dto.EndDateMonth, dto.EndDateYear, dto.EndDateDay, dto.FromWhom,
-                                dto.FullName, dto.StartDateDay, dto.StartDateMonth, dto.StartDateYear, dto.ToWhom };
+                        filledFileName = "vacation.doc";
+                        oTemplate = Path.Combine(dir, VacationFileName);
+                        filledFilePath = Path.Combine(dir, filledFileName);
+                        dtoParams = new string[]
+                        {
+                            dto.CreationDate.Day.ToString(),
+                            dto.CreationDate.ToString("MMMM", CultureInfo.CreateSpecificCulture("ru")),
+                            (dto.CreationDate.Year % 100).ToString(),
+                            (dto.EndDate - dto.StartDate).Days.ToString(),
+                            dto.EndDate.ToString("MMMM", CultureInfo.CreateSpecificCulture("ru")),
+                            (dto.EndDate.Year % 100).ToString(),
+                            dto.EndDate.Day.ToString(),
+                            userDto.AuthorFullName,
+                            userDto.AuthorFullName,
+                            dto.StartDate.Day.ToString(),
+                            dto.StartDate.ToString("MMMM", CultureInfo.CreateSpecificCulture("ru")),
+                            (dto.StartDate.Year % 100).ToString(),
+                            GenDirectorFullName
+                        };
                         break;
                     case "dismissal":
-                        oTemplate = @"C:\.NetITIS\Dev\DocumentService\data\blank-zayavleniya-na-uvolnenie-po-sobstvennomu-zhelaniyu.doc";
-                        filledFilePath = @"C:\.NetITIS\Dev\DocumentServicedata\dismissal.doc";
-                        dtoParams = new string[] {dto.DateDay, dto.DateMonth, dto.DateYear, dto.FromWhom,
-                                dto.FullName, dto.StartDateDay, dto.StartDateMonth, dto.StartDateYear, dto.ToWhom };
+                        filledFileName = "dismissal.doc";
+                        oTemplate = Path.Combine(dir, DismissalFileName);
+                        filledFilePath = Path.Combine(dir, filledFileName);
+                        dtoParams = new string[]
+                        {
+                            dto.CreationDate.Day.ToString(),
+                            dto.CreationDate.ToString("MMMM", CultureInfo.CreateSpecificCulture("ru")),
+                            (dto.CreationDate.Year % 100).ToString(),
+                            userDto.AuthorFullName,
+                            userDto.AuthorFullName,
+                            dto.StartDate.Day.ToString(),
+                            dto.StartDate.ToString("MMMM", CultureInfo.CreateSpecificCulture("ru")),
+                            (dto.StartDate.Year % 100).ToString(),
+                            GenDirectorFullName
+                        };
                         break;
                 }
 
@@ -88,6 +124,8 @@ namespace DocumentService.Services
                 oDoc.Close();
                 oDoc = null;
                 oWord.Quit();
+
+                return await _templates.GetAsync(filledFileName);
             }
             catch (Exception exc)
             {
@@ -97,6 +135,5 @@ namespace DocumentService.Services
                 throw;
             }
         }
-        
     }
 }

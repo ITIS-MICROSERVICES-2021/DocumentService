@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using DocumentService.DTOs;
+using DocumentService.Dto;
 using DocumentService.Services;
 using HarmonyLib;
 using Microsoft.Extensions.Logging;
@@ -65,9 +65,9 @@ namespace DocumentService.Tests
 #endif
         }
 
-        private static VacationDTO GetVacationDto()
+        private static VacationDto GetVacationDto()
         {
-            return new VacationDTO()
+            return new VacationDto()
             {
                 Duration = "1",
                 DateDay = "1",
